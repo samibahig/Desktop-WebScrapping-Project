@@ -1,6 +1,6 @@
 # Desktop-WebScrapping-Project
 ## Project description:
-Create a Python web scraper using Beautiful Soup to extract job title, salary, company, location, job type and description from data related to Data science jobs around Montreal on Indeed.
+Create a Python web scraper project using Beautiful Soup to extract job title, salary, company, location, job type and description from data related to Data science jobs around Montreal on Indeed.
 
 ## The constraints of the project are:
 - Random scratching (1 p.m. - 1:15 p.m. - 1:18 p.m.)
@@ -9,4 +9,4 @@ Create a Python web scraper using Beautiful Soup to extract job title, salary, c
 - Represent the data collected in a form suitable for exploration
 
 ## URL to Scrape:
-URL = "https://ca.indeed.com/jobs?q=Data+Scientist&l=Montr%C3%A9al%2C+QC&radius=0"
+URL = "https://ca.indeed.com/jobs?q=Data%20Scientist"
