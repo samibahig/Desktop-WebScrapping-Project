@@ -9,4 +9,4 @@ Create a Python web scraper project using Beautiful Soup to extract job title, s
 - Represent the data collected in a form suitable for exploration
 
 ## URL to Scrape:
-URL = "https://ca.indeed.com/jobs?q=Data%20Scientist"
+URL = "https://ca.indeed.com/jobs?q=Data+Scientist"
