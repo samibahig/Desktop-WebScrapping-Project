@@ -5,14 +5,17 @@ from bs4 import BeautifulSoup
 import datetime
 
 
-###   Issa est ce qu'on verifie le statut 200, c'est toujours mieux de le faire au début
-if r.status_code != 200:
-    return False
 
 url_start = "https://ca.indeed.com/jobs?q=Data+Scientist"
 url_query = "/jobs?q=Data+Scientist"
 url_base = "https://ca.indeed.com"
-page = requests.get(url_start)
+page = requests.get(url_start, timeout=5)
+###   Issa est ce qu'on verifie le statut 200, c'est toujours mieux de le faire au début
+print('Status code: ',response.status_code)
+if response.status_code==200:
+    print('Connection successfull.\n\n')
+else:
+    print('Error. Check status code table.\n\n')    
 soup = BeautifulSoup(page.text, "html.parser")
 data_file = "data_science_jobs.csv"
 
