@@ -4,6 +4,11 @@ import re
 from bs4 import BeautifulSoup
 import datetime
 
+
+###   Issa est ce qu'on verifie le statut 200, c'est toujours mieux de le faire au début
+if r.status_code != 200:
+    return False
+
 url_start = "https://ca.indeed.com/jobs?q=Data+Scientist"
 url_query = "/jobs?q=Data+Scientist"
 url_base = "https://ca.indeed.com"
@@ -12,8 +17,17 @@ soup = BeautifulSoup(page.text, "html.parser")
 data_file = "data_science_jobs.csv"
 
 
+### Issa, est ce que tu pense que ce serait pas mieux de vérifier le nombre de pages poru ne pas dépasser un maximum?
+page_count = soup.select('.pager-pages > li > a')
+if page_count:
+ #do your stuff
+else:
+ # ALERT!! Send notification to Admin
+
+
+
 def get_soup(url):
-    page = requests.get(url)
+    page = requests.get(url, timeout=5)      #### j'ai rajouté le timout à 5 secondes ici, tu peux le monter si tu veux, aussi pourquoi ne pas rajouter headers ici
     soup = BeautifulSoup(page.text, "html.parser")
     return soup
 
