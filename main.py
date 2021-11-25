@@ -1,143 +1,40 @@
-import requests as requests
-import csv
-import re
-from bs4 import BeautifulSoup
-import datetime
+import time
+
+from mod_functions import base_url, base_query, get_soup, is_captcha_page, extract_company_name, \
+    extract_company_location, extract_company_salary, extract_job_description, extract_job_posting_date, write_to_file, \
+    data_file, check_next_page_status, sleep_time
 
 
+def main():
+    page_num = 0
+    page_status = True
+    echec_connexion = 1
 
-url_start = "https://ca.indeed.com/jobs?q=Data+Scientist"
-url_query = "/jobs?q=Data+Scientist"
-url_base = "https://ca.indeed.com"
-page = requests.get(url_start, timeout=5)
-###   Issa est ce qu'on verifie le statut 200, c'est toujours mieux de le faire au début
-print('Status code: ',response.status_code)
-if response.status_code==200:
-    print('Connection successfull.\n\n')
-else:
-    print('Error. Check status code table.\n\n')    
-soup = BeautifulSoup(page.text, "html.parser")
-data_file = "data_science_jobs.csv"
-
-
-### Issa, est ce que tu pense que ce serait pas mieux de vérifier le nombre de pages poru ne pas dépasser un maximum?
-page_count = soup.select('.pager-pages > li > a')
-if page_count:
- #do your stuff
-else:
- # ALERT!! Send notification to Admin
-
-
-
-def get_soup(url):
-    page = requests.get(url, timeout=5)      #### j'ai rajouté le timout à 5 secondes ici, tu peux le monter si tu veux, aussi pourquoi ne pas rajouter headers ici
-    soup = BeautifulSoup(page.text, "html.parser")
-    return soup
-
-
-def data_file_init(data_file):
-    try:
-        with open(data_file, 'r') as output_file:
-            pass  # nothing to do
-    except FileNotFoundError:
-        # Create an empty file
-        open(data_file, 'a+', encoding='utf-8')
-        headers = ['job_title', 'JOB_LOCATION', 'JOB_SALARY_RANGE', 'JOB_DESCRIPTION', 'POSTING_DATE', 'SCRAPING_DATE']
-        with open(data_file, 'w', newline='') as csv_file:
-            writer = csv.writer(csv_file)
-            writer.writerow(headers)
-    finally:
-        pass
-
-
-def get_job_listing_pagination(soup, url_query):
-    pagination = [url_query]
-    for div in soup.find_all(name="div", attrs={"class": "pagination"}):
-        for li in div.find_all("li"):
-            for a in li.find_all('a', href=True):
-                if a['href']:
-                    uri = a['href']
-                    pagination.append(uri)
-    return pagination
-
-
-def clean_html_tag(html_data):
-    clean = re.compile('<.*?>')
-    return re.sub(clean, '', html_data)
-
-
-def extract_company_name(soup):
-    job = []
-    for div in soup.find_all(name="div", attrs={"class": "company_location"}):
-        if div.find_all(name="span", attrs={"class": "companyName"}):
-            for span in div.find_all(name="span", attrs={"class": "companyName"}):
-                job.append(span.text)
+    while page_status:
+        active_page = base_url + base_query + str(page_num)
+        active_page_soup = get_soup(active_page)
+        captcha = is_captcha_page(active_page_soup)
+        if active_page_soup and captcha is False:
+            page_job_name_list = extract_company_name(active_page_soup)
+            page_job_location_list = extract_company_location(active_page_soup)
+            page_job_salary_list = extract_company_salary(active_page_soup)
+            page_job_desc_list = extract_job_description(active_page_soup)
+            page_job_post_date = extract_job_posting_date(active_page_soup)
+            write_to_file(data_file, page_job_name_list, page_job_location_list, page_job_salary_list,
+                          page_job_desc_list, page_job_post_date)
+            print("Les annonces de la paginnation {} scrappées.".format(page_num))
+            page_num = page_num + 10
+            next_query = base_query + str(page_num)
+            page_status = check_next_page_status(active_page, next_query)
+        elif echec_connexion == 2:
+            print("{} échecs de connexion au site, arrêt du script. Veuillez vérifierou mettre à jour le script. "
+                  "Bye bye...".format(echec_connexion))
+            exit()
         else:
-            job.append("vide")
-    return job
+            echec_connexion = echec_connexion + 1
+            print("Échec de connexion au site. Nouvelle tentative de connexion dans {} seconde(s)".format(sleep_time))
+            time.sleep(sleep_time)
 
 
-def extract_company_location(soup):
-    location = []
-    for div in soup.find_all(name="div", attrs={"class": "company_location"}):
-        for div in div.find_all(name="div", attrs={"class": "companyLocation"}):
-            location.append(div.text)
-    return location
-
-
-def extract_company_salary(soup):
-    salary = []
-    for div in soup.find_all(name="div", attrs={"class": "slider_container"}):
-        if div.find_all(name="div", attrs={"class": "salary-snippet"}):
-            for span in div.find_all(name="div", attrs={"class": "salary-snippet"}):
-                salary.append(span.text)
-        else:
-            salary.append("vide")
-    return salary
-
-
-def extract_job_description(soup):
-    description = []
-    for div in soup.find_all(name="div", attrs={"class": "slider_container"}):
-        for div2 in div.find_all(name="div", attrs={"class": "job-snippet"}):
-            # print(div2)
-            uls = div2.find("ul")
-            if uls:
-                for li in uls.findAll("li"):
-                    desc = str(li)
-                description.append(clean_html_tag(desc))
-            else:
-                description.append(div2.text)
-    return description
-
-
-def extract_job_posting_date(soup):
-    date = []
-    for div in soup.find_all(name="div", attrs={"class": "result-footer"}):
-        for span in div.find_all(name="span", attrs={"class": "date"}):
-            date.append(span.text)
-    return date
-
-
-def write_to_file(csv_file, job_name_list, job_location_list, job_salary_list, job_desc_list, job_posting_date):
-    with open(csv_file, "a+", encoding='utf-8', newline='') as f:
-        writer = csv.writer(f)
-        for i in range(len(job_name_list)):
-            now = datetime.datetime.now()
-            content = [job_name_list[i], job_location_list[i], job_salary_list[i], job_desc_list[i],
-                       job_posting_date[i], now.strftime("%Y-%m-%d %H:%M:%S")]
-            writer.writerow(content)
-
-
-data_file_init(data_file)
-first_soup = get_soup(url_start)
-pagination = get_job_listing_pagination(soup, url_query)
-for page in range(len(pagination)):
-    active_page = url_base + pagination[page]
-    soup = get_soup(active_page)
-    job_name_list = extract_company_name(soup)
-    job_location_list = extract_company_location(soup)
-    job_salary_list = extract_company_salary(soup)
-    job_desc_list = extract_job_description(soup)
-    job_post_date = extract_job_posting_date(soup)
-    write_to_file(data_file, job_name_list, job_location_list, job_salary_list, job_desc_list, job_post_date)
+if __name__ == '__main__':
+    main()
